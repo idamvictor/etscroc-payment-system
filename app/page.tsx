@@ -1,3 +1,5 @@
+import PaymentForm from "@/components/PaymentForm";
+
 export default function Home() {
-  return <div>Hello</div>;
+  return <PaymentForm />;
 }
