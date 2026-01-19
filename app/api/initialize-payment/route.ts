@@ -4,8 +4,8 @@ import axios from "axios";
 interface PaymentRequest {
   firstName: string;
   lastName: string;
-  email: string;
   course: string;
+  email: string;
   amount: number;
 }
 
@@ -14,21 +14,15 @@ export async function POST(request: NextRequest) {
     const body: PaymentRequest = await request.json();
 
     // Validate required fields
-    if (
-      !body.firstName ||
-      !body.lastName ||
-      !body.email ||
-      !body.course ||
-      !body.amount
-    ) {
+    if (!body.firstName || !body.lastName || !body.email) {
       return NextResponse.json(
-        { message: "All fields are required" },
+        { message: "First name, last name, and email are required" },
         { status: 400 }
       );
     }
 
     // Validate amount
-    if (body.amount < 100) {
+    if (!body.amount || body.amount < 100) {
       return NextResponse.json(
         { message: "Amount must be at least ₦100" },
         { status: 400 }
@@ -52,7 +46,7 @@ export async function POST(request: NextRequest) {
       metadata: {
         firstName: body.firstName,
         lastName: body.lastName,
-        course: body.course,
+        course: body.course || "Course",
       },
     };
 
