@@ -9,7 +9,7 @@ interface PaymentFormData {
   email: string;
 }
 
-const FIXED_AMOUNT = 30000;
+const FIXED_AMOUNT = 35000;
 
 const courses = [
   "Frontend Development",
@@ -204,9 +204,7 @@ export default function PaymentForm() {
               disabled={loading}
               className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-bold py-3 px-4 rounded-lg transition duration-300 transform hover:scale-105 mt-6"
             >
-              {loading
-                ? "Processing..."
-                : `Pay ₦${FIXED_AMOUNT.toLocaleString()}`}
+              {loading ? "Processing..." : "Pay"}
             </button>
 
             {/* Secured By Paystack */}
