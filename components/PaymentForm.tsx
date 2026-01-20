@@ -12,12 +12,13 @@ interface PaymentFormData {
 const FIXED_AMOUNT = 35000;
 
 const courses = [
-  "Frontend Development",
-  "Backend Development",
-  "Full Stack Development",
-  "Mobile Development",
-  "Data Science",
-  "DevOps Engineering",
+  "Web Development and Design",
+  "Python Programming",
+  "Professional Video Editing",
+  "Product Design",
+  "Digital Marketing",
+  "Social Media Management",
+  "Search Engine Optimization",
 ];
 
 export default function PaymentForm() {
