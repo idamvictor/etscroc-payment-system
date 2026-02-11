@@ -19,6 +19,7 @@ const courses = [
   "Digital Marketing",
   "Social Media Management",
   "Search Engine Optimization",
+  "AI/Machine Learning",
 ];
 
 export default function PaymentForm() {
@@ -33,7 +34,7 @@ export default function PaymentForm() {
   const [success, setSuccess] = useState("");
 
   const handleChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>
+    e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({
