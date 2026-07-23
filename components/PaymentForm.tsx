@@ -9,7 +9,7 @@ interface PaymentFormData {
   email: string;
 }
 
-const FIXED_AMOUNT = 35000;
+const FIXED_AMOUNT = 35675;
 
 const courses = [
   "Web Development and Design",
