@@ -1,7 +1,9 @@
 import Link from "next/link";
+import { ClipboardList, ExternalLink } from "lucide-react";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import LogoutButton from "./LogoutButton";
 import StatusActions from "./StatusActions";
+import { Badge } from "@/components/ui/badge";
 import {
   Table,
   TableBody,
@@ -67,20 +69,29 @@ export default async function AdminPage({
 
   return (
     <div className="min-h-screen bg-background">
+      <div className="h-1 w-full bg-linear-to-r from-brand-orange-dark via-brand-orange to-brand-blue" />
       <div className="max-w-400 mx-auto p-6">
         <div className="flex items-center justify-between mb-6">
-          <div>
-            <h1 className="text-2xl font-bold text-foreground">
-              Registrations
-            </h1>
-            <p className="text-sm text-muted-foreground mt-1">
-              {counts.all} total &middot; {counts.pending} awaiting review
-            </p>
+          <div className="flex items-center gap-3">
+            <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-linear-to-br from-brand-orange-dark to-brand-orange text-white shadow-sm">
+              <ClipboardList className="h-5 w-5" />
+            </span>
+            <div>
+              <h1 className="text-2xl font-bold text-foreground">
+                Registrations
+              </h1>
+              <div className="flex items-center gap-2 mt-1.5">
+                <Badge variant="outline">{counts.all} total</Badge>
+                <Badge variant="warning">
+                  {counts.pending} awaiting review
+                </Badge>
+              </div>
+            </div>
           </div>
           <LogoutButton />
         </div>
 
-        <nav className="flex gap-1 mb-4 border-b border-border">
+        <nav className="inline-flex items-center gap-1 mb-4 p-1 bg-muted rounded-full">
           {STATUS_TABS.map((tab) => {
             const isActive = tab === activeTab;
             const href = tab === "all" ? "/admin" : `/admin?status=${tab}`;
@@ -88,22 +99,25 @@ export default async function AdminPage({
               <Link
                 key={tab}
                 href={href}
-                className={`px-4 py-2.5 text-sm font-medium capitalize border-b-2 transition ${
+                className={`px-4 py-2 text-sm font-semibold capitalize rounded-full transition ${
                   isActive
-                    ? "border-primary text-foreground"
-                    : "border-transparent text-muted-foreground hover:text-foreground"
+                    ? "bg-brand-orange-dark text-white shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
-                {tab} <span className="text-muted-foreground">({counts[tab]})</span>
+                {tab}{" "}
+                <span className={isActive ? "text-white/80" : "text-muted-foreground"}>
+                  ({counts[tab]})
+                </span>
               </Link>
             );
           })}
         </nav>
 
-        <div className="bg-card border border-border rounded-xl shadow-sm">
+        <div className="bg-card rounded-xl shadow-lg">
           <Table>
             <TableHeader>
-              <TableRow className="divide-x divide-border">
+              <TableRow className="sticky top-0 z-10 divide-x divide-border bg-card">
                 <TableHead>Submitted</TableHead>
                 <TableHead>First Name</TableHead>
                 <TableHead>Last Name</TableHead>
@@ -156,8 +170,9 @@ export default async function AdminPage({
                         href={r.receiptUrl}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="text-primary font-medium underline underline-offset-2"
+                        className="inline-flex items-center gap-1 rounded-full bg-orange-50 px-2.5 py-1 text-xs font-semibold text-brand-orange-dark transition hover:bg-orange-100"
                       >
+                        <ExternalLink className="h-3 w-3" />
                         View
                       </a>
                     ) : (
@@ -169,12 +184,19 @@ export default async function AdminPage({
               ))}
               {rows.length === 0 && (
                 <TableRow>
-                  <TableCell
-                    colSpan={21}
-                    className="text-center text-muted-foreground py-12"
-                  >
-                    No registrations
-                    {activeTab !== "all" ? ` with status "${activeTab}"` : ""}.
+                  <TableCell colSpan={21} className="py-16 text-center">
+                    <div className="flex flex-col items-center gap-2">
+                      <ClipboardList className="h-8 w-8 text-muted-foreground/40" />
+                      <p className="text-sm font-medium text-foreground">
+                        No registrations
+                        {activeTab !== "all"
+                          ? ` with status "${activeTab}"`
+                          : " yet"}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        New submissions will show up here automatically.
+                      </p>
+                    </div>
                   </TableCell>
                 </TableRow>
               )}
