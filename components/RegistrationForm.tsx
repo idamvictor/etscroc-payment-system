@@ -2,6 +2,16 @@
 
 import { useRef, useState } from "react";
 import { FileText, Upload, X } from "lucide-react";
+import {
+  courses,
+  genderOptions,
+  countryOptions,
+  employmentOptions,
+  educationOptions,
+  experienceOptions,
+  jobSupportOptions,
+  nigerianStates,
+} from "@/lib/registration-options";
 
 interface RegistrationFormData {
   firstName: string;
@@ -24,85 +34,6 @@ interface RegistrationFormData {
 }
 
 const FIXED_AMOUNT = 35675;
-
-const courses = [
-  "Web Development and Design",
-  "Python Programming",
-  "Professional Video Editing",
-  "Product Design",
-  "Digital Marketing",
-  "Social Media Management",
-  "Search Engine Optimization",
-  "AI/Machine Learning",
-];
-
-const genderOptions = ["Male", "Female", "Prefer not to say"];
-const countryOptions = ["Nigeria", "Other"];
-const employmentOptions = [
-  "Student",
-  "Graduate",
-  "NYSC Corper",
-  "Working Professional (Employed)",
-  "Self Employed",
-  "Unemployed",
-  "Other",
-];
-const educationOptions = [
-  "High School",
-  "Degree",
-  "Masters",
-  "HND",
-  "Diploma",
-  "OND",
-  "Mphil / PhD",
-  "NCE",
-  "Other",
-];
-const experienceOptions = [
-  "Yes, I already have some experience",
-  "No, I'm completely new to tech",
-  "A little, but I want to deepen my knowledge",
-];
-const jobSupportOptions = ["Yes, definitely", "Not at the moment"];
-const nigerianStates = [
-  "Abia",
-  "Adamawa",
-  "Akwa Ibom",
-  "Anambra",
-  "Bauchi",
-  "Bayelsa",
-  "Benue",
-  "Borno",
-  "Cross River",
-  "Delta",
-  "Ebonyi",
-  "Edo",
-  "Ekiti",
-  "Enugu",
-  "FCT (Abuja)",
-  "Gombe",
-  "Imo",
-  "Jigawa",
-  "Kaduna",
-  "Kano",
-  "Katsina",
-  "Kebbi",
-  "Kogi",
-  "Kwara",
-  "Lagos",
-  "Nasarawa",
-  "Niger",
-  "Ogun",
-  "Ondo",
-  "Osun",
-  "Oyo",
-  "Plateau",
-  "Rivers",
-  "Sokoto",
-  "Taraba",
-  "Yobe",
-  "Zamfara",
-];
 
 const initialFormData: RegistrationFormData = {
   firstName: "",
@@ -135,6 +66,8 @@ export default function RegistrationForm() {
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleChange = (
@@ -156,9 +89,47 @@ export default function RegistrationForm() {
     handleFileSelect(e.dataTransfer.files?.[0] ?? null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    setSubmitError(null);
+
+    if (!receiptFile) {
+      setSubmitError("Please attach your payment receipt.");
+      return;
+    }
+
+    const payload = new FormData();
+    Object.entries(formData).forEach(([key, value]) => {
+      payload.append(key, String(value));
+    });
+    payload.append("receiptFile", receiptFile);
+
+    setIsSubmitting(true);
+    try {
+      const res = await fetch("/api/register", {
+        method: "POST",
+        body: payload,
+      });
+
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        setSubmitError(
+          body?.message ?? "Something went wrong. Please try again.",
+        );
+        return;
+      }
+
+      setSubmitted(true);
+      setFormData(initialFormData);
+      setReceiptFile(null);
+      if (fileInputRef.current) fileInputRef.current.value = "";
+    } catch {
+      setSubmitError(
+        "Network error — please check your connection and try again.",
+      );
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -482,17 +453,26 @@ export default function RegistrationForm() {
             {submitted && (
               <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
                 <p className="text-sm text-brand-orange-dark font-medium">
-                  Thanks! This form is UI only for now — submission isn&apos;t
-                  wired up yet.
+                  Thanks! Your registration and receipt have been submitted
+                  successfully. We&apos;ll be in touch soon.
+                </p>
+              </div>
+            )}
+
+            {submitError && (
+              <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+                <p className="text-sm text-red-700 font-medium">
+                  {submitError}
                 </p>
               </div>
             )}
 
             <button
               type="submit"
-              className="w-full bg-linear-to-r from-brand-orange-dark to-brand-orange hover:opacity-90 text-white font-bold py-3 px-4 rounded-lg transition duration-300 transform hover:scale-105"
+              disabled={isSubmitting}
+              className="w-full bg-linear-to-r from-brand-orange-dark to-brand-orange hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-lg transition duration-300 transform hover:scale-105 disabled:hover:scale-100"
             >
-              Submit
+              {isSubmitting ? "Submitting…" : "Submit"}
             </button>
           </form>
         </div>

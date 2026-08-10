@@ -1,0 +1,78 @@
+export const courses = [
+  "Web Development and Design",
+  "Python Programming",
+  "Professional Video Editing",
+  "Product Design",
+  "Digital Marketing",
+  "Social Media Management",
+  "Search Engine Optimization",
+  "AI/Machine Learning",
+];
+
+export const genderOptions = ["Male", "Female", "Prefer not to say"];
+export const countryOptions = ["Nigeria", "Other"];
+export const employmentOptions = [
+  "Student",
+  "Graduate",
+  "NYSC Corper",
+  "Working Professional (Employed)",
+  "Self Employed",
+  "Unemployed",
+  "Other",
+];
+export const educationOptions = [
+  "High School",
+  "Degree",
+  "Masters",
+  "HND",
+  "Diploma",
+  "OND",
+  "Mphil / PhD",
+  "NCE",
+  "Other",
+];
+export const experienceOptions = [
+  "Yes, I already have some experience",
+  "No, I'm completely new to tech",
+  "A little, but I want to deepen my knowledge",
+];
+export const jobSupportOptions = ["Yes, definitely", "Not at the moment"];
+export const nigerianStates = [
+  "Abia",
+  "Adamawa",
+  "Akwa Ibom",
+  "Anambra",
+  "Bauchi",
+  "Bayelsa",
+  "Benue",
+  "Borno",
+  "Cross River",
+  "Delta",
+  "Ebonyi",
+  "Edo",
+  "Ekiti",
+  "Enugu",
+  "FCT (Abuja)",
+  "Gombe",
+  "Imo",
+  "Jigawa",
+  "Kaduna",
+  "Kano",
+  "Katsina",
+  "Kebbi",
+  "Kogi",
+  "Kwara",
+  "Lagos",
+  "Nasarawa",
+  "Niger",
+  "Ogun",
+  "Ondo",
+  "Osun",
+  "Oyo",
+  "Plateau",
+  "Rivers",
+  "Sokoto",
+  "Taraba",
+  "Yobe",
+  "Zamfara",
+];
