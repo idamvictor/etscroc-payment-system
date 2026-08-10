@@ -1,7 +1,7 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { FileText, Upload, X } from "lucide-react";
+import { Check, Copy, FileText, Landmark, Upload, X } from "lucide-react";
 import {
   courses,
   genderOptions,
@@ -33,7 +33,8 @@ interface RegistrationFormData {
   agreeTerms: boolean;
 }
 
-const FIXED_AMOUNT = 35675;
+const FIXED_AMOUNT = 50000;
+const ACCOUNT_NUMBER = "3004141504";
 
 const initialFormData: RegistrationFormData = {
   firstName: "",
@@ -68,7 +69,18 @@ export default function RegistrationForm() {
   const [submitted, setSubmitted] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  const handleCopyAccountNumber = async () => {
+    try {
+      await navigator.clipboard.writeText(ACCOUNT_NUMBER);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1500);
+    } catch {
+      // Clipboard access can be blocked (e.g. insecure context); ignore.
+    }
+  };
 
   const handleChange = (
     e: React.ChangeEvent<
@@ -140,14 +152,17 @@ export default function RegistrationForm() {
 
       <div className="relative w-full max-w-2xl bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden">
         {/* Header */}
-        <div className="bg-linear-to-r from-brand-orange-dark to-brand-orange p-8 text-white">
-          <p className="text-xs font-semibold uppercase tracking-wider text-white/80">
+        <div className="relative overflow-hidden border-b border-brand-orange bg-linear-to-br from-orange-50 via-white to-orange-50 p-8">
+          <div className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-brand-orange/15 blur-2xl" />
+
+          <span className="relative inline-flex items-center gap-1.5 rounded-full bg-brand-orange-dark px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">
             Etscroc Tech and Business Agency
-          </p>
-          <h1 className="text-3xl font-bold mt-1">
+          </span>
+
+          <h1 className="relative text-3xl font-extrabold text-gray-900 tracking-tight mt-3">
             The Etscroc Virtual Tech Cohort August 2026
           </h1>
-          <p className="text-white/90 mt-3 text-sm leading-relaxed">
+          <p className="relative text-sm text-gray-600 leading-relaxed mt-3 max-w-md">
             Learn beginner-friendly tech and digital skills, go from zero to
             job-ready, get internship/job placement support and join a
             community that supports your growth.
@@ -234,6 +249,7 @@ export default function RegistrationForm() {
                   name="countryOther"
                   value={formData.countryOther}
                   onChange={handleChange}
+                  required
                   placeholder="Enter your country"
                   className={`${inputClass} mt-2`}
                 />
@@ -273,6 +289,7 @@ export default function RegistrationForm() {
                   name="employmentStatusOther"
                   value={formData.employmentStatusOther}
                   onChange={handleChange}
+                  required
                   placeholder="Please specify"
                   className={`${inputClass} mt-2`}
                 />
@@ -293,6 +310,7 @@ export default function RegistrationForm() {
                   name="educationLevelOther"
                   value={formData.educationLevelOther}
                   onChange={handleChange}
+                  required
                   placeholder="Please specify"
                   className={`${inputClass} mt-2`}
                 />
@@ -348,6 +366,68 @@ export default function RegistrationForm() {
                 className={inputClass}
               />
             </Field>
+
+            {/* Bank transfer details */}
+            <div className="relative overflow-hidden rounded-2xl border-2 border-brand-orange bg-linear-to-br from-orange-50 via-white to-orange-50 p-6 shadow-md">
+              <div className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-brand-orange/15 blur-2xl" />
+
+              <span className="relative inline-flex items-center gap-1.5 rounded-full bg-brand-orange-dark px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">
+                <Landmark className="h-3.5 w-3.5" />
+                Payment Required
+              </span>
+
+              <p className="relative text-sm font-medium text-gray-600 mt-4">
+                Transfer this amount to complete your registration
+              </p>
+              <p className="relative text-4xl font-extrabold text-brand-orange-dark tracking-tight mt-1">
+                ₦{FIXED_AMOUNT.toLocaleString()}
+              </p>
+
+              <div className="relative grid grid-cols-1 sm:grid-cols-3 gap-4 mt-5 pt-5 border-t border-orange-200">
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    Bank
+                  </p>
+                  <p className="text-base font-bold text-gray-900 mt-0.5">
+                    Kuda Bank
+                  </p>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    Account Number
+                  </p>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <p className="text-base font-bold text-gray-900 font-mono tracking-wide">
+                      {ACCOUNT_NUMBER}
+                    </p>
+                    <button
+                      type="button"
+                      onClick={handleCopyAccountNumber}
+                      className="p-1 rounded-md text-brand-orange-dark hover:bg-orange-100 transition"
+                      aria-label="Copy account number"
+                    >
+                      {copied ? (
+                        <Check className="h-4 w-4" />
+                      ) : (
+                        <Copy className="h-4 w-4" />
+                      )}
+                    </button>
+                  </div>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-wide text-gray-500">
+                    Account Name
+                  </p>
+                  <p className="text-base font-bold text-gray-900 mt-0.5">
+                    Etscroc Tech and Business Agency Ltd
+                  </p>
+                </div>
+              </div>
+
+              <p className="relative text-xs text-gray-500 mt-4">
+                Upload your payment receipt below after making the transfer.
+              </p>
+            </div>
 
             {/* Payment receipt upload */}
             <div>
