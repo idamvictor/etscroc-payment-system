@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { courses } from "@/lib/registration-options";
 
 interface PaymentFormData {
   firstName: string;
@@ -10,17 +11,6 @@ interface PaymentFormData {
 }
 
 const FIXED_AMOUNT = 35675;
-
-const courses = [
-  "Web Development and Design",
-  "Python Programming",
-  "Professional Video Editing",
-  "Product Design",
-  "Digital Marketing",
-  "Social Media Management",
-  "Search Engine Optimization",
-  "AI/Machine Learning",
-];
 
 export default function PaymentForm() {
   const [formData, setFormData] = useState<PaymentFormData>({
@@ -78,12 +68,23 @@ export default function PaymentForm() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center">
-      <div className="w-full max-w-lg bg-white rounded-xl shadow-lg overflow-hidden">
-        {/* Header with Paystack Green */}
-        <div className="bg-linear-to-r from-green-600 to-green-500 p-8 text-white">
-          <h1 className="text-3xl font-bold">Pay for Course</h1>
-          <p className="text-green-100 mt-2">
+    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8 flex items-center justify-center relative overflow-hidden">
+      <div className="pointer-events-none absolute -top-32 -right-32 h-96 w-96 rounded-full bg-brand-blue/10 blur-3xl" />
+      <div className="pointer-events-none absolute bottom-0 left-0 h-72 w-72 rounded-full bg-brand-orange/10 blur-3xl" />
+
+      <div className="relative w-full max-w-lg bg-white border border-gray-200 rounded-2xl shadow-lg overflow-hidden">
+        {/* Header */}
+        <div className="relative overflow-hidden border-b border-brand-orange bg-linear-to-br from-orange-50 via-white to-orange-50 p-8">
+          <div className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-brand-orange/15 blur-2xl" />
+
+          <span className="relative inline-flex items-center gap-1.5 rounded-full bg-brand-orange-dark px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">
+            Etscroc Tech and Business Agency
+          </span>
+
+          <h1 className="relative text-3xl font-extrabold text-gray-900 tracking-tight mt-3">
+            Pay for Course
+          </h1>
+          <p className="relative text-sm text-gray-600 leading-relaxed mt-3">
             Complete your enrollment securely
           </p>
         </div>
@@ -106,7 +107,7 @@ export default function PaymentForm() {
                 value={formData.firstName}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
+                className={inputClass}
                 placeholder="John"
               />
             </div>
@@ -126,7 +127,7 @@ export default function PaymentForm() {
                 value={formData.lastName}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
+                className={inputClass}
                 placeholder="Doe"
               />
             </div>
@@ -145,7 +146,7 @@ export default function PaymentForm() {
                 value={formData.course}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
+                className={inputClass}
               >
                 <option value="">Choose a course</option>
                 {courses.map((course) => (
@@ -171,16 +172,16 @@ export default function PaymentForm() {
                 value={formData.email}
                 onChange={handleChange}
                 required
-                className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent outline-none transition"
+                className={inputClass}
                 placeholder="john@example.com"
               />
             </div>
 
             {/* Price Display */}
             {formData.course && (
-              <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
+              <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
                 <p className="text-sm text-gray-600">Course Price:</p>
-                <p className="text-2xl font-bold text-green-600">
+                <p className="text-2xl font-bold text-brand-orange-dark">
                   ₦{FIXED_AMOUNT.toLocaleString()}
                 </p>
               </div>
@@ -195,8 +196,10 @@ export default function PaymentForm() {
 
             {/* Success Message */}
             {success && (
-              <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
-                <p className="text-sm text-green-700 font-medium">{success}</p>
+              <div className="p-4 bg-emerald-50 border border-emerald-200 rounded-lg">
+                <p className="text-sm text-emerald-700 font-medium">
+                  {success}
+                </p>
               </div>
             )}
 
@@ -204,9 +207,9 @@ export default function PaymentForm() {
             <button
               type="submit"
               disabled={loading}
-              className="w-full bg-green-600 hover:bg-green-700 disabled:bg-gray-400 text-white font-bold py-3 px-4 rounded-lg transition duration-300 transform hover:scale-105 mt-6"
+              className="w-full bg-linear-to-r from-brand-orange-dark to-brand-orange hover:opacity-90 disabled:opacity-60 disabled:cursor-not-allowed text-white font-bold py-3 px-4 rounded-lg transition duration-300 transform hover:scale-105 disabled:hover:scale-100 mt-6"
             >
-              {loading ? "Processing..." : "Pay"}
+              {loading ? "Processing…" : "Pay"}
             </button>
 
             {/* Secured By Paystack */}
@@ -222,3 +225,6 @@ export default function PaymentForm() {
     </div>
   );
 }
+
+const inputClass =
+  "w-full px-4 py-3 bg-white border border-gray-200 text-gray-900 placeholder-gray-400 rounded-lg focus:ring-2 focus:ring-brand-orange focus:border-transparent outline-none transition";
