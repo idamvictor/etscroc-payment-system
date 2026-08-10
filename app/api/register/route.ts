@@ -30,6 +30,23 @@ function requiredText(formData: FormData, field: string): string | null {
   return value.trim();
 }
 
+// Registration numbers are assigned from the smallest gap in the table
+// (not a monotonic sequence), so deleting a registration frees its number
+// up for the next submission instead of leaving a permanent gap.
+async function getNextRegistrationNumber(): Promise<number> {
+  const { data, error } = await supabaseAdmin
+    .from("nls_registrations")
+    .select("registration_number")
+    .order("registration_number", { ascending: true });
+
+  if (error) throw error;
+
+  const used = new Set((data ?? []).map((r) => r.registration_number));
+  let candidate = 1;
+  while (used.has(candidate)) candidate++;
+  return candidate;
+}
+
 export async function POST(request: Request) {
   const formData = await request.formData();
 
@@ -117,27 +134,46 @@ export async function POST(request: Request) {
     );
   }
 
-  const { data: inserted, error: insertError } = await supabaseAdmin
-    .from("nls_registrations")
-    .insert({
-      id: rowId,
-      full_name: fullName,
-      whatsapp_phone: whatsappPhone,
-      email,
-      matric_number: matricNumber,
-      campus,
-      courses: selectedCourses,
-      total_amount_paid: totalAmountPaid,
-      payment_reference: paymentReference,
-      receipt_path: receiptPath,
-      receipt_filename: receiptFile.name,
-      receipt_content_type: receiptFile.type,
-      receipt_size_bytes: receiptFile.size,
-    })
-    .select("registration_number")
-    .single();
+  let inserted: { registration_number: number } | null = null;
+  let insertError: { code?: string; message: string } | null = null;
 
-  if (insertError || !inserted) {
+  // A gap-filled number is computed just before each attempt, so a race
+  // against another concurrent submission (both picking the same gap) is
+  // resolved by retrying with a freshly recomputed number rather than
+  // failing the registration outright.
+  for (let attempt = 0; attempt < 3 && !inserted; attempt++) {
+    const registrationNumber = await getNextRegistrationNumber();
+    const { data, error } = await supabaseAdmin
+      .from("nls_registrations")
+      .insert({
+        id: rowId,
+        registration_number: registrationNumber,
+        full_name: fullName,
+        whatsapp_phone: whatsappPhone,
+        email,
+        matric_number: matricNumber,
+        campus,
+        courses: selectedCourses,
+        total_amount_paid: totalAmountPaid,
+        payment_reference: paymentReference,
+        receipt_path: receiptPath,
+        receipt_filename: receiptFile.name,
+        receipt_content_type: receiptFile.type,
+        receipt_size_bytes: receiptFile.size,
+      })
+      .select("registration_number")
+      .single();
+
+    if (!error) {
+      inserted = data;
+      break;
+    }
+
+    insertError = error;
+    if (error.code !== "23505") break; // not a number collision, don't retry
+  }
+
+  if (!inserted) {
     console.error("Registration insert failed:", insertError);
     await supabaseAdmin.storage.from("receipts").remove([receiptPath]);
     return NextResponse.json(

@@ -3,6 +3,7 @@ import { ClipboardList, ExternalLink } from "lucide-react";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import { formatNlsRegistrationId } from "@/lib/nls-registration-id";
 import LogoutButton from "./LogoutButton";
+import RefreshButton from "./RefreshButton";
 import StatusActions from "./StatusActions";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -89,7 +90,10 @@ export default async function AdminPage({
               </div>
             </div>
           </div>
-          <LogoutButton />
+          <div className="flex items-center gap-2">
+            <RefreshButton />
+            <LogoutButton />
+          </div>
         </div>
 
         <nav className="inline-flex items-center gap-1 mb-4 p-1 bg-muted rounded-full">

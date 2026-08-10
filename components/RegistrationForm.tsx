@@ -7,6 +7,13 @@ import {
   NLS_CAMPUS,
   NLS_COURSE_PRICE,
 } from "@/lib/registration-options";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 interface RegistrationFormData {
   fullName: string;
@@ -443,27 +450,6 @@ export default function RegistrationForm() {
               </div>
             </div>
 
-            {submitted && (
-              <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
-                <p className="text-sm text-brand-orange-dark font-medium">
-                  Thanks! Your registration has been submitted successfully.
-                </p>
-                {registrationId && (
-                  <>
-                    <p className="text-xs text-gray-600 mt-2">
-                      Your Registration ID is
-                    </p>
-                    <p className="text-lg font-mono font-bold text-brand-orange-dark">
-                      {registrationId}
-                    </p>
-                    <p className="text-xs text-gray-500 mt-1">
-                      Please save this ID for your records.
-                    </p>
-                  </>
-                )}
-              </div>
-            )}
-
             {submitError && (
               <div className="p-4 bg-red-50 border border-red-200 rounded-lg">
                 <p className="text-sm text-red-700 font-medium">
@@ -482,6 +468,47 @@ export default function RegistrationForm() {
           </form>
         </div>
       </div>
+
+      <Dialog
+        open={submitted}
+        onOpenChange={(open) => {
+          if (!open) setSubmitted(false);
+        }}
+      >
+        <DialogContent className="sm:max-w-md text-center">
+          <DialogHeader>
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-orange-100">
+              <Check className="h-7 w-7 text-brand-orange-dark" />
+            </div>
+            <DialogTitle className="text-center text-xl mt-2">
+              Registration Submitted
+            </DialogTitle>
+            <DialogDescription className="text-center">
+              Thanks! Your registration has been submitted successfully.
+            </DialogDescription>
+          </DialogHeader>
+
+          {registrationId && (
+            <div className="rounded-lg bg-orange-50 border border-orange-200 p-4">
+              <p className="text-xs text-gray-600">Your Registration ID is</p>
+              <p className="text-lg font-mono font-bold text-brand-orange-dark mt-1">
+                {registrationId}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">
+                Please save this ID for your records.
+              </p>
+            </div>
+          )}
+
+          <button
+            type="button"
+            onClick={() => setSubmitted(false)}
+            className="w-full bg-linear-to-r from-brand-orange-dark to-brand-orange hover:opacity-90 text-white font-bold py-2.5 px-4 rounded-lg transition"
+          >
+            Done
+          </button>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
