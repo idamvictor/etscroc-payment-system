@@ -44,6 +44,9 @@
   --radius-2xl: calc(var(--radius) + 8px);
   --radius-3xl: calc(var(--radius) + 12px);
   --radius-4xl: calc(var(--radius) + 16px);
+  --color-brand-orange: var(--brand-orange);
+  --color-brand-orange-dark: var(--brand-orange-dark);
+  --color-brand-blue: var(--brand-blue);
 }
 
 :root {
@@ -79,6 +82,9 @@
   --sidebar-accent-foreground: oklch(0.21 0.006 285.885);
   --sidebar-border: oklch(0.92 0.004 286.32);
   --sidebar-ring: oklch(0.705 0.015 286.067);
+  --brand-orange: #f97316;
+  --brand-orange-dark: #ea580c;
+  --brand-blue: #2563eb;
 }
 
 .dark {
