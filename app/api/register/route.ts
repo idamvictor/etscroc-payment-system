@@ -1,9 +1,13 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import {
   sendRegistrationConfirmationEmail,
   sendAdminNewRegistrationEmail,
 } from "@/lib/email";
+
+function delay(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
 import {
   courses,
   genderOptions,
@@ -200,22 +204,25 @@ export async function POST(request: Request) {
     );
   }
 
-  // Insert succeeded — registration is done. Email sends are best-effort;
-  // failures here must never fail the registration response.
-  try {
-    await Promise.all([
-      sendRegistrationConfirmationEmail({ to: email, firstName, course }),
-      sendAdminNewRegistrationEmail({
+  // Insert succeeded — registration is done. Email sends are best-effort and
+  // run after the response is sent, staggered a few seconds apart so two
+  // emails don't leave the same Gmail account back-to-back (looks less
+  // like automated/bot traffic to spam filters).
+  after(async () => {
+    try {
+      await sendRegistrationConfirmationEmail({ to: email, firstName, course });
+      await delay(4000);
+      await sendAdminNewRegistrationEmail({
         firstName,
         lastName,
         email,
         phone,
         course,
-      }),
-    ]);
-  } catch (err) {
-    console.error("Registration email dispatch failed:", err);
-  }
+      });
+    } catch (err) {
+      console.error("Registration email dispatch failed:", err);
+    }
+  });
 
   return NextResponse.json({ ok: true, id: registrationId }, { status: 201 });
 }

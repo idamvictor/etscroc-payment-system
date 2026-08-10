@@ -123,7 +123,8 @@ export default async function AdminPage({
                 <TableHead>Referral Code</TableHead>
                 <TableHead>Agreed to Terms</TableHead>
                 <TableHead>Receipt</TableHead>
-                <TableHead>Status &amp; Actions</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -163,15 +164,13 @@ export default async function AdminPage({
                       <span className="text-muted-foreground">—</span>
                     )}
                   </TableCell>
-                  <TableCell>
-                    <StatusActions id={r.id} status={r.payment_status} />
-                  </TableCell>
+                  <StatusActions id={r.id} status={r.payment_status} />
                 </TableRow>
               ))}
               {rows.length === 0 && (
                 <TableRow>
                   <TableCell
-                    colSpan={20}
+                    colSpan={21}
                     className="text-center text-muted-foreground py-12"
                   >
                     No registrations

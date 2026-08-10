@@ -4,6 +4,7 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { TableCell } from "@/components/ui/table";
 import type { badgeVariants } from "@/components/ui/badge";
 import type { VariantProps } from "class-variance-authority";
 
@@ -52,37 +53,43 @@ export default function StatusActions({
   };
 
   return (
-    <div className="flex items-center gap-2">
-      <Badge variant={STATUS_VARIANT[current]}>{STATUS_LABELS[current]}</Badge>
-      <Button
-        type="button"
-        size="xs"
-        variant="success"
-        disabled={isUpdating || current === "approved"}
-        onClick={() => updateStatus("approved")}
-      >
-        Approve
-      </Button>
-      <Button
-        type="button"
-        size="xs"
-        variant="destructive"
-        disabled={isUpdating || current === "rejected"}
-        onClick={() => updateStatus("rejected")}
-      >
-        Reject
-      </Button>
-      {current !== "pending" && (
-        <Button
-          type="button"
-          size="xs"
-          variant="ghost"
-          disabled={isUpdating}
-          onClick={() => updateStatus("pending")}
-        >
-          Reset
-        </Button>
-      )}
-    </div>
+    <>
+      <TableCell>
+        <Badge variant={STATUS_VARIANT[current]}>{STATUS_LABELS[current]}</Badge>
+      </TableCell>
+      <TableCell>
+        <div className="flex items-center gap-2">
+          <Button
+            type="button"
+            size="xs"
+            variant="success"
+            disabled={isUpdating || current === "approved"}
+            onClick={() => updateStatus("approved")}
+          >
+            Approve
+          </Button>
+          <Button
+            type="button"
+            size="xs"
+            variant="destructive"
+            disabled={isUpdating || current === "rejected"}
+            onClick={() => updateStatus("rejected")}
+          >
+            Reject
+          </Button>
+          {current !== "pending" && (
+            <Button
+              type="button"
+              size="xs"
+              variant="ghost"
+              disabled={isUpdating}
+              onClick={() => updateStatus("pending")}
+            >
+              Reset
+            </Button>
+          )}
+        </div>
+      </TableCell>
+    </>
   );
 }

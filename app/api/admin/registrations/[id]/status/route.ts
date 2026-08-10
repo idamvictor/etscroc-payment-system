@@ -1,6 +1,9 @@
-import { NextResponse } from "next/server";
+import { NextResponse, after } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
-import { sendRegistrationApprovedEmail } from "@/lib/email";
+import {
+  sendRegistrationApprovedEmail,
+  sendRegistrationRejectedEmail,
+} from "@/lib/email";
 
 const ALLOWED_STATUSES = ["pending", "approved", "rejected"];
 
@@ -55,16 +58,33 @@ export async function PATCH(
     );
   }
 
-  if (status === "approved" && previousStatus !== "approved" && updated) {
-    try {
-      await sendRegistrationApprovedEmail({
-        to: updated.email,
-        firstName: updated.first_name,
-        course: updated.course,
-      });
-    } catch (err) {
-      console.error("Approval email dispatch failed:", err);
-    }
+  // Notify the user on a genuine transition into approved/rejected — not
+  // on repeat clicks of the same status, and not on "pending" (that's an
+  // internal reset action, not a customer-facing outcome).
+  if (
+    (status === "approved" || status === "rejected") &&
+    previousStatus !== status &&
+    updated
+  ) {
+    after(async () => {
+      try {
+        if (status === "approved") {
+          await sendRegistrationApprovedEmail({
+            to: updated.email,
+            firstName: updated.first_name,
+            course: updated.course,
+          });
+        } else {
+          await sendRegistrationRejectedEmail({
+            to: updated.email,
+            firstName: updated.first_name,
+            course: updated.course,
+          });
+        }
+      } catch (err) {
+        console.error("Status email dispatch failed:", err);
+      }
+    });
   }
 
   return NextResponse.json({ ok: true });
