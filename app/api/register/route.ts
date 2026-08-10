@@ -1,6 +1,10 @@
 import { NextResponse } from "next/server";
 import { supabaseAdmin } from "@/lib/supabase/admin";
 import {
+  sendRegistrationConfirmationEmail,
+  sendAdminNewRegistrationEmail,
+} from "@/lib/email";
+import {
   courses,
   genderOptions,
   countryOptions,
@@ -194,6 +198,23 @@ export async function POST(request: Request) {
       { ok: false, message: "Registration failed, please try again." },
       { status: 500 },
     );
+  }
+
+  // Insert succeeded — registration is done. Email sends are best-effort;
+  // failures here must never fail the registration response.
+  try {
+    await Promise.all([
+      sendRegistrationConfirmationEmail({ to: email, firstName, course }),
+      sendAdminNewRegistrationEmail({
+        firstName,
+        lastName,
+        email,
+        phone,
+        course,
+      }),
+    ]);
+  } catch (err) {
+    console.error("Registration email dispatch failed:", err);
   }
 
   return NextResponse.json({ ok: true, id: registrationId }, { status: 201 });
