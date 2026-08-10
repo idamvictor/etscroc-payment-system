@@ -3,57 +3,31 @@
 import { useRef, useState } from "react";
 import { Check, Copy, FileText, Landmark, Upload, X } from "lucide-react";
 import {
-  courses,
-  genderOptions,
-  countryOptions,
-  employmentOptions,
-  educationOptions,
-  experienceOptions,
-  jobSupportOptions,
-  nigerianStates,
+  nlsCourses,
+  NLS_CAMPUS,
+  NLS_COURSE_PRICE,
 } from "@/lib/registration-options";
 
 interface RegistrationFormData {
-  firstName: string;
-  lastName: string;
+  fullName: string;
+  whatsappPhone: string;
   email: string;
-  phone: string;
-  gender: string;
-  country: string;
-  countryOther: string;
-  stateCity: string;
-  employmentStatus: string;
-  employmentStatusOther: string;
-  educationLevel: string;
-  educationLevelOther: string;
-  course: string;
-  techExperience: string;
-  jobSupport: string;
-  referralCode: string;
-  agreeTerms: boolean;
+  matricNumber: string;
+  courses: string[];
+  totalAmountPaid: string;
+  paymentReference: string;
 }
 
-const FIXED_AMOUNT = 50000;
 const ACCOUNT_NUMBER = "3004141504";
 
 const initialFormData: RegistrationFormData = {
-  firstName: "",
-  lastName: "",
+  fullName: "",
+  whatsappPhone: "",
   email: "",
-  phone: "",
-  gender: "",
-  country: "",
-  countryOther: "",
-  stateCity: "",
-  employmentStatus: "",
-  employmentStatusOther: "",
-  educationLevel: "",
-  educationLevelOther: "",
-  course: "",
-  techExperience: "",
-  jobSupport: "",
-  referralCode: "",
-  agreeTerms: false,
+  matricNumber: "",
+  courses: [],
+  totalAmountPaid: "",
+  paymentReference: "",
 };
 
 function formatFileSize(bytes: number) {
@@ -67,6 +41,7 @@ export default function RegistrationForm() {
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
   const [isDragging, setIsDragging] = useState(false);
   const [submitted, setSubmitted] = useState(false);
+  const [registrationId, setRegistrationId] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -83,12 +58,19 @@ export default function RegistrationForm() {
   };
 
   const handleChange = (
-    e: React.ChangeEvent<
-      HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement
-    >,
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
   ) => {
     const { name, value } = e.target;
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleCourseToggle = (option: string, checked: boolean) => {
+    setFormData((prev) => ({
+      ...prev,
+      courses: checked
+        ? [...prev.courses, option]
+        : prev.courses.filter((c) => c !== option),
+    }));
   };
 
   const handleFileSelect = (file: File | null) => {
@@ -105,15 +87,31 @@ export default function RegistrationForm() {
     e.preventDefault();
     setSubmitError(null);
 
+    if (formData.courses.length === 0) {
+      setSubmitError("Please select at least one course.");
+      return;
+    }
+
+    const amount = Number(formData.totalAmountPaid);
+    if (!Number.isFinite(amount) || amount <= 0) {
+      setSubmitError("Please enter a valid amount paid.");
+      return;
+    }
+
     if (!receiptFile) {
-      setSubmitError("Please attach your payment receipt.");
+      setSubmitError("Please attach your payment evidence.");
       return;
     }
 
     const payload = new FormData();
-    Object.entries(formData).forEach(([key, value]) => {
-      payload.append(key, String(value));
-    });
+    payload.append("fullName", formData.fullName);
+    payload.append("whatsappPhone", formData.whatsappPhone);
+    payload.append("email", formData.email);
+    payload.append("matricNumber", formData.matricNumber);
+    payload.append("campus", NLS_CAMPUS);
+    formData.courses.forEach((course) => payload.append("courses", course));
+    payload.append("totalAmountPaid", formData.totalAmountPaid);
+    payload.append("paymentReference", formData.paymentReference);
     payload.append("receiptFile", receiptFile);
 
     setIsSubmitting(true);
@@ -123,8 +121,9 @@ export default function RegistrationForm() {
         body: payload,
       });
 
+      const body = await res.json().catch(() => null);
+
       if (!res.ok) {
-        const body = await res.json().catch(() => null);
         setSubmitError(
           body?.message ?? "Something went wrong. Please try again.",
         );
@@ -132,6 +131,7 @@ export default function RegistrationForm() {
       }
 
       setSubmitted(true);
+      setRegistrationId(body?.id ?? null);
       setFormData(initialFormData);
       setReceiptFile(null);
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -156,216 +156,111 @@ export default function RegistrationForm() {
           <div className="pointer-events-none absolute -top-10 -right-10 h-32 w-32 rounded-full bg-brand-orange/15 blur-2xl" />
 
           <span className="relative inline-flex items-center gap-1.5 rounded-full bg-brand-orange-dark px-3 py-1 text-xs font-bold uppercase tracking-wide text-white">
-            Etscroc Tech and Business Agency
+            Nigeria Law School × ETSCROC Tech
           </span>
 
           <h1 className="relative text-3xl font-extrabold text-gray-900 tracking-tight mt-3">
-            The Etscroc Virtual Tech Cohort August 2026
+            Nigeria Law School × ETSCROC Tech Training Registration
           </h1>
           <p className="relative text-sm text-gray-600 leading-relaxed mt-3 max-w-md">
-            Learn beginner-friendly tech and digital skills, go from zero to
-            job-ready, get internship/job placement support and join a
-            community that supports your growth.
+            Welcome to the Nigeria Law School × ETSCROC Tech Training
+            Programme. Please complete this form after making payment.
+            Ensure that the information provided matches your payment
+            details.
           </p>
+          <p className="relative text-sm font-semibold text-gray-800 mt-3">
+            Course fee: ₦{NLS_COURSE_PRICE.toLocaleString()} per course.
+          </p>
+          <p className="relative text-xs font-semibold uppercase tracking-wide text-gray-500 mt-4">
+            Available courses
+          </p>
+          <div className="relative flex flex-wrap gap-2 mt-2">
+            {nlsCourses.map((course) => (
+              <span
+                key={course}
+                className="inline-flex items-center rounded-full bg-orange-100 px-3 py-1 text-xs font-semibold text-brand-orange-dark"
+              >
+                {course}
+              </span>
+            ))}
+          </div>
         </div>
 
         <div className="p-8">
           <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Personal details */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <Field label="First Name" htmlFor="firstName">
-                <input
-                  type="text"
-                  id="firstName"
-                  name="firstName"
-                  value={formData.firstName}
-                  onChange={handleChange}
-                  required
-                  placeholder="John"
-                  className={inputClass}
-                />
-              </Field>
-              <Field label="Last Name" htmlFor="lastName">
-                <input
-                  type="text"
-                  id="lastName"
-                  name="lastName"
-                  value={formData.lastName}
-                  onChange={handleChange}
-                  required
-                  placeholder="Doe"
-                  className={inputClass}
-                />
-              </Field>
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
-              <Field label="Email Address" htmlFor="email">
-                <input
-                  type="email"
-                  id="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={handleChange}
-                  required
-                  placeholder="john@example.com"
-                  className={inputClass}
-                />
-              </Field>
-              <Field label="Phone Number" htmlFor="phone">
-                <input
-                  type="tel"
-                  id="phone"
-                  name="phone"
-                  value={formData.phone}
-                  onChange={handleChange}
-                  required
-                  placeholder="0800 000 0000"
-                  className={inputClass}
-                />
-              </Field>
-            </div>
-
-            {/* Gender */}
-            <RadioGroup
-              label="Gender"
-              name="gender"
-              options={genderOptions}
-              value={formData.gender}
-              onChange={handleChange}
-            />
-
-            {/* Country */}
-            <RadioGroup
-              label="Country"
-              name="country"
-              options={countryOptions}
-              value={formData.country}
-              onChange={handleChange}
-            >
-              {formData.country === "Other" && (
-                <input
-                  type="text"
-                  name="countryOther"
-                  value={formData.countryOther}
-                  onChange={handleChange}
-                  required
-                  placeholder="Enter your country"
-                  className={`${inputClass} mt-2`}
-                />
-              )}
-            </RadioGroup>
-
-            {/* State/City */}
-            <Field label="State/City" htmlFor="stateCity">
-              <select
-                id="stateCity"
-                name="stateCity"
-                value={formData.stateCity}
-                onChange={handleChange}
-                required
-                className={inputClass}
-              >
-                <option value="">Choose a state</option>
-                {nigerianStates.map((state) => (
-                  <option key={state} value={state}>
-                    {state}
-                  </option>
-                ))}
-              </select>
-            </Field>
-
-            {/* Employment status */}
-            <RadioGroup
-              label="Current Employment/Study Status"
-              name="employmentStatus"
-              options={employmentOptions}
-              value={formData.employmentStatus}
-              onChange={handleChange}
-            >
-              {formData.employmentStatus === "Other" && (
-                <input
-                  type="text"
-                  name="employmentStatusOther"
-                  value={formData.employmentStatusOther}
-                  onChange={handleChange}
-                  required
-                  placeholder="Please specify"
-                  className={`${inputClass} mt-2`}
-                />
-              )}
-            </RadioGroup>
-
-            {/* Education level */}
-            <RadioGroup
-              label="Educational Level"
-              name="educationLevel"
-              options={educationOptions}
-              value={formData.educationLevel}
-              onChange={handleChange}
-            >
-              {formData.educationLevel === "Other" && (
-                <input
-                  type="text"
-                  name="educationLevelOther"
-                  value={formData.educationLevelOther}
-                  onChange={handleChange}
-                  required
-                  placeholder="Please specify"
-                  className={`${inputClass} mt-2`}
-                />
-              )}
-            </RadioGroup>
-
-            {/* Course */}
-            <RadioGroup
-              label="Which course would you like to apply for?"
-              name="course"
-              options={courses}
-              value={formData.course}
-              onChange={handleChange}
-            />
-
-            {/* Price display */}
-            {formData.course && (
-              <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
-                <p className="text-sm text-gray-600">Course Price:</p>
-                <p className="text-2xl font-bold text-brand-orange-dark">
-                  ₦{FIXED_AMOUNT.toLocaleString()}
-                </p>
-              </div>
-            )}
-
-            {/* Tech experience */}
-            <RadioGroup
-              label="Do you have any prior tech experience?"
-              name="techExperience"
-              options={experienceOptions}
-              value={formData.techExperience}
-              onChange={handleChange}
-            />
-
-            {/* Job support */}
-            <RadioGroup
-              label="Would you like Etscroc Tech to support you with job platforms and opportunities after completing your course?"
-              name="jobSupport"
-              options={jobSupportOptions}
-              value={formData.jobSupport}
-              onChange={handleChange}
-            />
-
-            {/* Referral code */}
-            <Field label="Referral code (optional)" htmlFor="referralCode">
+            <Field label="Full Name" htmlFor="fullName">
               <input
                 type="text"
-                id="referralCode"
-                name="referralCode"
-                value={formData.referralCode}
+                id="fullName"
+                name="fullName"
+                value={formData.fullName}
                 onChange={handleChange}
-                placeholder="Your answer"
+                required
+                placeholder="John Doe"
                 className={inputClass}
               />
             </Field>
+
+            <Field label="WhatsApp Phone Number" htmlFor="whatsappPhone">
+              <input
+                type="tel"
+                id="whatsappPhone"
+                name="whatsappPhone"
+                value={formData.whatsappPhone}
+                onChange={handleChange}
+                required
+                placeholder="0800 000 0000"
+                className={inputClass}
+              />
+            </Field>
+
+            <Field label="Email Address" htmlFor="email">
+              <input
+                type="email"
+                id="email"
+                name="email"
+                value={formData.email}
+                onChange={handleChange}
+                required
+                placeholder="john@example.com"
+                className={inputClass}
+              />
+            </Field>
+
+            <Field
+              label="Nigeria Law School Student ID / Matriculation Number"
+              htmlFor="matricNumber"
+            >
+              <input
+                type="text"
+                id="matricNumber"
+                name="matricNumber"
+                value={formData.matricNumber}
+                onChange={handleChange}
+                required
+                placeholder="e.g. NLS/2024/00123"
+                className={inputClass}
+              />
+            </Field>
+
+            <div>
+              <p className="block text-sm font-semibold text-gray-800 mb-2">
+                Campus
+              </p>
+              <div className={`${inputClass} bg-gray-50 text-gray-600`}>
+                {NLS_CAMPUS}
+              </div>
+            </div>
+
+            {/* Course selection */}
+            <CheckboxGroup
+              label="Which course(s) are you registering for?"
+              name="courses"
+              options={nlsCourses}
+              value={formData.courses}
+              onChange={handleCourseToggle}
+              hint="₦50,000 per course. If you registered for multiple courses, select all applicable courses."
+            />
 
             {/* Bank transfer details */}
             <div className="relative overflow-hidden rounded-2xl border-2 border-brand-orange bg-linear-to-br from-orange-50 via-white to-orange-50 p-6 shadow-md">
@@ -376,11 +271,28 @@ export default function RegistrationForm() {
                 Payment Required
               </span>
 
-              <p className="relative text-sm font-medium text-gray-600 mt-4">
-                Transfer this amount to complete your registration
-              </p>
-              <p className="relative text-4xl font-extrabold text-brand-orange-dark tracking-tight mt-1">
-                ₦{FIXED_AMOUNT.toLocaleString()}
+              {formData.courses.length > 0 ? (
+                <>
+                  <p className="relative text-sm font-medium text-gray-600 mt-4">
+                    Amount to pay for {formData.courses.length}{" "}
+                    {formData.courses.length === 1 ? "course" : "courses"}
+                  </p>
+                  <p className="relative text-4xl font-extrabold text-brand-orange-dark tracking-tight mt-1">
+                    ₦
+                    {(
+                      formData.courses.length * NLS_COURSE_PRICE
+                    ).toLocaleString()}
+                  </p>
+                </>
+              ) : (
+                <p className="relative text-sm font-medium text-gray-600 mt-4">
+                  Select your course(s) above to see the amount to pay.
+                </p>
+              )}
+              <p className="relative text-sm text-gray-600 mt-3">
+                ₦{NLS_COURSE_PRICE.toLocaleString()} per course. Pay the total
+                for all courses you&apos;re registering for to the account
+                below, then upload your proof of payment.
               </p>
 
               <div className="relative grid grid-cols-1 sm:grid-cols-3 gap-4 mt-5 pt-5 border-t border-orange-200">
@@ -425,14 +337,46 @@ export default function RegistrationForm() {
               </div>
 
               <p className="relative text-xs text-gray-500 mt-4">
-                Upload your payment receipt below after making the transfer.
+                Upload your proof of payment below after making the transfer.
               </p>
             </div>
 
-            {/* Payment receipt upload */}
+            <Field label="Total Amount Paid" htmlFor="totalAmountPaid">
+              <input
+                type="number"
+                id="totalAmountPaid"
+                name="totalAmountPaid"
+                value={formData.totalAmountPaid}
+                onChange={handleChange}
+                required
+                min={NLS_COURSE_PRICE}
+                step={NLS_COURSE_PRICE}
+                inputMode="numeric"
+                placeholder="Example: 50000, 100000 or 150000"
+                className={inputClass}
+              />
+            </Field>
+
+            <Field
+              label="Payment Transaction Reference"
+              htmlFor="paymentReference"
+            >
+              <input
+                type="text"
+                id="paymentReference"
+                name="paymentReference"
+                value={formData.paymentReference}
+                onChange={handleChange}
+                required
+                placeholder="Enter the transaction/reference number on your receipt"
+                className={inputClass}
+              />
+            </Field>
+
+            {/* Payment evidence upload */}
             <div>
               <label className="block text-sm font-semibold text-gray-800 mb-2">
-                Payment Receipt
+                Upload Payment Evidence
               </label>
               <div
                 onClick={() => fileInputRef.current?.click()}
@@ -482,7 +426,7 @@ export default function RegistrationForm() {
                       <span className="text-brand-orange-dark font-medium">
                         Click to upload
                       </span>{" "}
-                      or drag and drop your payment receipt
+                      or drag and drop your proof of payment
                     </p>
                     <p className="text-xs">PNG, JPG or PDF</p>
                   </div>
@@ -499,43 +443,24 @@ export default function RegistrationForm() {
               </div>
             </div>
 
-            {/* Terms */}
-            <label className="flex items-start gap-3 text-sm text-gray-700">
-              <input
-                type="checkbox"
-                name="agreeTerms"
-                checked={formData.agreeTerms}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    agreeTerms: e.target.checked,
-                  }))
-                }
-                required
-                className="mt-1 h-4 w-4 accent-orange-500"
-              />
-              <span>
-                By submitting this form, you confirm that you have read and
-                accepted Etscroc{" "}
-                <a
-                  href="https://docs.google.com/document/d/153mB0eeOU6KjKKPgy0aiEQGjhZmRJA_MMavgfp12m9w/edit?tab=t.0#heading=h.6deqo0fhwjv9"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                  className="text-brand-orange-dark underline underline-offset-2 hover:text-brand-orange"
-                >
-                  Terms and Conditions
-                </a>
-                .
-              </span>
-            </label>
-
             {submitted && (
               <div className="p-4 bg-orange-50 border border-orange-200 rounded-lg">
                 <p className="text-sm text-brand-orange-dark font-medium">
-                  Thanks! Your registration and receipt have been submitted
-                  successfully. We&apos;ll be in touch soon.
+                  Thanks! Your registration has been submitted successfully.
                 </p>
+                {registrationId && (
+                  <>
+                    <p className="text-xs text-gray-600 mt-2">
+                      Your Registration ID is
+                    </p>
+                    <p className="text-lg font-mono font-bold text-brand-orange-dark">
+                      {registrationId}
+                    </p>
+                    <p className="text-xs text-gray-500 mt-1">
+                      Please save this ID for your records.
+                    </p>
+                  </>
+                )}
               </div>
             )}
 
@@ -586,20 +511,20 @@ function Field({
   );
 }
 
-function RadioGroup({
+function CheckboxGroup({
   label,
   name,
   options,
   value,
   onChange,
-  children,
+  hint,
 }: {
   label: string;
   name: string;
   options: string[];
-  value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  children?: React.ReactNode;
+  value: string[];
+  onChange: (option: string, checked: boolean) => void;
+  hint?: string;
 }) {
   return (
     <div>
@@ -611,25 +536,24 @@ function RadioGroup({
           <label
             key={option}
             className={`flex items-center gap-3 px-4 py-3 rounded-lg border cursor-pointer transition ${
-              value === option
+              value.includes(option)
                 ? "border-brand-orange bg-orange-50"
                 : "border-gray-200 bg-white hover:border-gray-300"
             }`}
           >
             <input
-              type="radio"
+              type="checkbox"
               name={name}
               value={option}
-              checked={value === option}
-              onChange={onChange}
-              required
+              checked={value.includes(option)}
+              onChange={(e) => onChange(option, e.target.checked)}
               className="h-4 w-4 accent-orange-500"
             />
             <span className="text-sm text-gray-800">{option}</span>
           </label>
         ))}
       </div>
-      {children}
+      {hint && <p className="text-xs text-gray-500 mt-2">{hint}</p>}
     </div>
   );
 }

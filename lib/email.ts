@@ -59,72 +59,99 @@ async function sendMail(opts: {
 
 export async function sendRegistrationConfirmationEmail(params: {
   to: string;
-  firstName: string;
-  course: string;
+  fullName: string;
+  courses: string[];
+  registrationId: string;
 }): Promise<boolean> {
-  const { to, firstName, course } = params;
+  const { to, fullName, courses, registrationId } = params;
+  const courseList = courses.join(", ");
   return sendMail({
     to,
-    subject: "We've received your registration",
-    text: `Hi ${firstName},\n\nWe've received your registration for ${course} along with your payment receipt. Our team will review it and follow up once it has been checked.\n\nYou'll receive another email once your payment has been approved.`,
+    subject: `We've received your registration (${registrationId})`,
+    text: `Hi ${fullName},\n\nWe've received your Nigeria Law School × ETSCROC Tech Training registration for ${courseList} along with your proof of payment.\n\nYour Registration ID is ${registrationId} — please keep this for your records.\n\nOur team will review your payment and follow up once it has been checked.`,
     html: renderEmailHtml(`
-      <p>Hi ${firstName},</p>
-      <p>We've received your registration for <strong>${course}</strong> along with your payment receipt. Our team will review it and follow up once it has been checked.</p>
-      <p>You'll receive another email once your payment has been approved.</p>
+      <p>Hi ${fullName},</p>
+      <p>We've received your Nigeria Law School × ETSCROC Tech Training registration for <strong>${courseList}</strong> along with your proof of payment.</p>
+      <p>Your Registration ID is <strong>${registrationId}</strong> — please keep this for your records.</p>
+      <p>Our team will review your payment and follow up once it has been checked.</p>
     `),
   });
 }
 
 export async function sendAdminNewRegistrationEmail(params: {
-  firstName: string;
-  lastName: string;
+  fullName: string;
+  whatsappPhone: string;
   email: string;
-  phone: string;
-  course: string;
+  matricNumber: string;
+  courses: string[];
+  totalAmountPaid: number;
+  paymentReference: string;
+  registrationId: string;
 }): Promise<boolean> {
   if (!ADMIN_NOTIFICATION_EMAIL) return false;
-  const { firstName, lastName, email, phone, course } = params;
+  const {
+    fullName,
+    whatsappPhone,
+    email,
+    matricNumber,
+    courses,
+    totalAmountPaid,
+    paymentReference,
+    registrationId,
+  } = params;
+  const courseList = courses.join(", ");
+  const amount = `₦${totalAmountPaid.toLocaleString()}`;
   return sendMail({
     to: ADMIN_NOTIFICATION_EMAIL,
-    subject: `New registration: ${firstName} ${lastName}`,
-    text: `${firstName} ${lastName} submitted a registration for ${course}.\nEmail: ${email}\nPhone: ${phone}`,
+    subject: `New NLS registration: ${fullName} (${registrationId})`,
+    text: `${fullName} submitted a Nigeria Law School × ETSCROC Tech Training registration.\nRegistration ID: ${registrationId}\nCourses: ${courseList}\nAmount paid: ${amount}\nPayment reference: ${paymentReference}\nWhatsApp: ${whatsappPhone}\nEmail: ${email}\nMatric number: ${matricNumber}`,
     html: renderEmailHtml(`
-      <p><strong>${firstName} ${lastName}</strong> submitted a registration for <strong>${course}</strong>.</p>
-      <p>Email: ${email}<br/>Phone: ${phone}</p>
+      <p><strong>${fullName}</strong> submitted a Nigeria Law School × ETSCROC Tech Training registration.</p>
+      <p>Registration ID: <strong>${registrationId}</strong><br/>
+      Courses: ${courseList}<br/>
+      Amount paid: ${amount}<br/>
+      Payment reference: ${paymentReference}<br/>
+      WhatsApp: ${whatsappPhone}<br/>
+      Email: ${email}<br/>
+      Matric number: ${matricNumber}</p>
     `),
   });
 }
 
 export async function sendRegistrationApprovedEmail(params: {
   to: string;
-  firstName: string;
-  course: string;
+  fullName: string;
+  courses: string[];
+  registrationId: string;
 }): Promise<boolean> {
-  const { to, firstName, course } = params;
+  const { to, fullName, courses, registrationId } = params;
+  const courseList = courses.join(", ");
   return sendMail({
     to,
     subject: "Your payment has been approved",
-    text: `Hi ${firstName},\n\nYour payment for ${course} has been approved. Your registration is now confirmed.`,
+    text: `Hi ${fullName},\n\nYour payment for your Nigeria Law School × ETSCROC Tech Training registration (${registrationId}) for ${courseList} has been approved. Your registration is now confirmed.`,
     html: renderEmailHtml(`
-      <p>Hi ${firstName},</p>
-      <p>Your payment for <strong>${course}</strong> has been approved. Your registration is now confirmed.</p>
+      <p>Hi ${fullName},</p>
+      <p>Your payment for your Nigeria Law School × ETSCROC Tech Training registration (<strong>${registrationId}</strong>) for <strong>${courseList}</strong> has been approved. Your registration is now confirmed.</p>
     `),
   });
 }
 
 export async function sendRegistrationRejectedEmail(params: {
   to: string;
-  firstName: string;
-  course: string;
+  fullName: string;
+  courses: string[];
+  registrationId: string;
 }): Promise<boolean> {
-  const { to, firstName, course } = params;
+  const { to, fullName, courses, registrationId } = params;
+  const courseList = courses.join(", ");
   return sendMail({
     to,
     subject: "Update on your registration payment",
-    text: `Hi ${firstName},\n\nWe were unable to verify your payment receipt for ${course}. Please reply to this email or reach out so we can resolve this.`,
+    text: `Hi ${fullName},\n\nWe were unable to verify the payment for your Nigeria Law School × ETSCROC Tech Training registration (${registrationId}) for ${courseList}. Please reply to this email or reach out so we can resolve this.`,
     html: renderEmailHtml(`
-      <p>Hi ${firstName},</p>
-      <p>We were unable to verify your payment receipt for <strong>${course}</strong>. Please reply to this email or reach out so we can resolve this.</p>
+      <p>Hi ${fullName},</p>
+      <p>We were unable to verify the payment for your Nigeria Law School × ETSCROC Tech Training registration (<strong>${registrationId}</strong>) for <strong>${courseList}</strong>. Please reply to this email or reach out so we can resolve this.</p>
     `),
   });
 }

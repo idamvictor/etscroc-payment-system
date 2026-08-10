@@ -4,19 +4,12 @@ import {
   sendRegistrationConfirmationEmail,
   sendAdminNewRegistrationEmail,
 } from "@/lib/email";
+import { formatNlsRegistrationId } from "@/lib/nls-registration-id";
+import { nlsCourses } from "@/lib/registration-options";
 
 function delay(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
-import {
-  courses,
-  genderOptions,
-  countryOptions,
-  employmentOptions,
-  educationOptions,
-  experienceOptions,
-  jobSupportOptions,
-} from "@/lib/registration-options";
 
 const MAX_RECEIPT_BYTES = 5 * 1024 * 1024;
 const ALLOWED_RECEIPT_TYPES = [
@@ -37,58 +30,30 @@ function requiredText(formData: FormData, field: string): string | null {
   return value.trim();
 }
 
-function requiredEnum(
-  formData: FormData,
-  field: string,
-  allowed: readonly string[],
-): string | null {
-  const value = requiredText(formData, field);
-  if (value === null || !allowed.includes(value)) return null;
-  return value;
-}
-
 export async function POST(request: Request) {
   const formData = await request.formData();
 
-  const firstName = requiredText(formData, "firstName");
-  const lastName = requiredText(formData, "lastName");
+  const fullName = requiredText(formData, "fullName");
+  const whatsappPhone = requiredText(formData, "whatsappPhone");
   const email = requiredText(formData, "email");
-  const phone = requiredText(formData, "phone");
-  const gender = requiredEnum(formData, "gender", genderOptions);
-  const country = requiredEnum(formData, "country", countryOptions);
-  const stateCity = requiredText(formData, "stateCity");
-  const employmentStatus = requiredEnum(
-    formData,
-    "employmentStatus",
-    employmentOptions,
-  );
-  const educationLevel = requiredEnum(
-    formData,
-    "educationLevel",
-    educationOptions,
-  );
-  const course = requiredEnum(formData, "course", courses);
-  const techExperience = requiredEnum(
-    formData,
-    "techExperience",
-    experienceOptions,
-  );
-  const jobSupport = requiredEnum(formData, "jobSupport", jobSupportOptions);
-  const agreeTerms = formData.get("agreeTerms") === "true";
+  const matricNumber = requiredText(formData, "matricNumber");
+  const campus = requiredText(formData, "campus");
+  const selectedCourses = formData
+    .getAll("courses")
+    .filter(
+      (c): c is string => typeof c === "string" && nlsCourses.includes(c),
+    );
+  const totalAmountPaidRaw = requiredText(formData, "totalAmountPaid");
+  const totalAmountPaid = totalAmountPaidRaw ? Number(totalAmountPaidRaw) : NaN;
+  const paymentReference = requiredText(formData, "paymentReference");
 
   const missing =
-    !firstName ||
-    !lastName ||
+    !fullName ||
+    !whatsappPhone ||
     !email ||
-    !phone ||
-    !gender ||
-    !country ||
-    !stateCity ||
-    !employmentStatus ||
-    !educationLevel ||
-    !course ||
-    !techExperience ||
-    !jobSupport;
+    !matricNumber ||
+    !campus ||
+    !paymentReference;
 
   if (missing) {
     return NextResponse.json(
@@ -97,61 +62,45 @@ export async function POST(request: Request) {
     );
   }
 
-  if (!agreeTerms) {
+  if (selectedCourses.length === 0) {
     return NextResponse.json(
-      { ok: false, message: "You must agree to the Terms and Conditions." },
+      { ok: false, message: "Please select at least one course." },
       { status: 400 },
     );
   }
 
-  const countryOther = requiredText(formData, "countryOther");
-  if (country === "Other" && !countryOther) {
+  if (!Number.isFinite(totalAmountPaid) || totalAmountPaid <= 0) {
     return NextResponse.json(
-      { ok: false, message: "Please specify your country." },
+      { ok: false, message: "Please enter a valid amount paid." },
       { status: 400 },
     );
   }
-
-  const employmentStatusOther = requiredText(formData, "employmentStatusOther");
-  if (employmentStatus === "Other" && !employmentStatusOther) {
-    return NextResponse.json(
-      { ok: false, message: "Please specify your employment status." },
-      { status: 400 },
-    );
-  }
-
-  const educationLevelOther = requiredText(formData, "educationLevelOther");
-  if (educationLevel === "Other" && !educationLevelOther) {
-    return NextResponse.json(
-      { ok: false, message: "Please specify your education level." },
-      { status: 400 },
-    );
-  }
-
-  const referralCode = requiredText(formData, "referralCode");
 
   const receiptFile = formData.get("receiptFile");
   if (!(receiptFile instanceof File) || receiptFile.size === 0) {
     return NextResponse.json(
-      { ok: false, message: "Please attach your payment receipt." },
+      { ok: false, message: "Please attach your payment evidence." },
       { status: 400 },
     );
   }
   if (receiptFile.size > MAX_RECEIPT_BYTES) {
     return NextResponse.json(
-      { ok: false, message: "Receipt file must be 5MB or smaller." },
+      { ok: false, message: "Payment evidence must be 5MB or smaller." },
       { status: 400 },
     );
   }
   if (!ALLOWED_RECEIPT_TYPES.includes(receiptFile.type)) {
     return NextResponse.json(
-      { ok: false, message: "Receipt must be a PNG, JPG, WEBP, or PDF file." },
+      {
+        ok: false,
+        message: "Payment evidence must be a PNG, JPG, WEBP, or PDF file.",
+      },
       { status: 400 },
     );
   }
 
-  const registrationId = crypto.randomUUID();
-  const receiptPath = `${registrationId}/${sanitizeFilename(receiptFile.name)}`;
+  const rowId = crypto.randomUUID();
+  const receiptPath = `${rowId}/${sanitizeFilename(receiptFile.name)}`;
 
   const { error: uploadError } = await supabaseAdmin.storage
     .from("receipts")
@@ -168,34 +117,27 @@ export async function POST(request: Request) {
     );
   }
 
-  const { error: insertError } = await supabaseAdmin
-    .from("registrations")
+  const { data: inserted, error: insertError } = await supabaseAdmin
+    .from("nls_registrations")
     .insert({
-      id: registrationId,
-      first_name: firstName,
-      last_name: lastName,
+      id: rowId,
+      full_name: fullName,
+      whatsapp_phone: whatsappPhone,
       email,
-      phone,
-      gender,
-      country,
-      country_other: countryOther,
-      state_city: stateCity,
-      employment_status: employmentStatus,
-      employment_status_other: employmentStatusOther,
-      education_level: educationLevel,
-      education_level_other: educationLevelOther,
-      course,
-      tech_experience: techExperience,
-      job_support: jobSupport,
-      referral_code: referralCode,
-      agree_terms: agreeTerms,
+      matric_number: matricNumber,
+      campus,
+      courses: selectedCourses,
+      total_amount_paid: totalAmountPaid,
+      payment_reference: paymentReference,
       receipt_path: receiptPath,
       receipt_filename: receiptFile.name,
       receipt_content_type: receiptFile.type,
       receipt_size_bytes: receiptFile.size,
-    });
+    })
+    .select("registration_number")
+    .single();
 
-  if (insertError) {
+  if (insertError || !inserted) {
     console.error("Registration insert failed:", insertError);
     await supabaseAdmin.storage.from("receipts").remove([receiptPath]);
     return NextResponse.json(
@@ -204,20 +146,30 @@ export async function POST(request: Request) {
     );
   }
 
+  const registrationId = formatNlsRegistrationId(inserted.registration_number);
+
   // Insert succeeded — registration is done. Email sends are best-effort and
   // run after the response is sent, staggered a few seconds apart so two
   // emails don't leave the same Gmail account back-to-back (looks less
   // like automated/bot traffic to spam filters).
   after(async () => {
     try {
-      await sendRegistrationConfirmationEmail({ to: email, firstName, course });
+      await sendRegistrationConfirmationEmail({
+        to: email,
+        fullName,
+        courses: selectedCourses,
+        registrationId,
+      });
       await delay(4000);
       await sendAdminNewRegistrationEmail({
-        firstName,
-        lastName,
+        fullName,
+        whatsappPhone,
         email,
-        phone,
-        course,
+        matricNumber,
+        courses: selectedCourses,
+        totalAmountPaid,
+        paymentReference,
+        registrationId,
       });
     } catch (err) {
       console.error("Registration email dispatch failed:", err);

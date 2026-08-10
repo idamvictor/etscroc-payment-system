@@ -4,6 +4,7 @@ import {
   sendRegistrationApprovedEmail,
   sendRegistrationRejectedEmail,
 } from "@/lib/email";
+import { formatNlsRegistrationId } from "@/lib/nls-registration-id";
 
 const ALLOWED_STATUSES = ["pending", "approved", "rejected"];
 
@@ -25,7 +26,7 @@ export async function PATCH(
   // Read prior status first so we only send the "approved" email on a
   // genuine pending/rejected -> approved transition, not on repeat clicks.
   const { data: existing, error: fetchError } = await supabaseAdmin
-    .from("registrations")
+    .from("nls_registrations")
     .select("payment_status")
     .eq("id", id)
     .single();
@@ -44,10 +45,10 @@ export async function PATCH(
   const previousStatus = existing.payment_status;
 
   const { data: updated, error } = await supabaseAdmin
-    .from("registrations")
+    .from("nls_registrations")
     .update({ payment_status: status })
     .eq("id", id)
-    .select("email, first_name, course")
+    .select("email, full_name, courses, registration_number")
     .single();
 
   if (error) {
@@ -68,17 +69,22 @@ export async function PATCH(
   ) {
     after(async () => {
       try {
+        const registrationId = formatNlsRegistrationId(
+          updated.registration_number,
+        );
         if (status === "approved") {
           await sendRegistrationApprovedEmail({
             to: updated.email,
-            firstName: updated.first_name,
-            course: updated.course,
+            fullName: updated.full_name,
+            courses: updated.courses,
+            registrationId,
           });
         } else {
           await sendRegistrationRejectedEmail({
             to: updated.email,
-            firstName: updated.first_name,
-            course: updated.course,
+            fullName: updated.full_name,
+            courses: updated.courses,
+            registrationId,
           });
         }
       } catch (err) {

@@ -37,6 +37,14 @@ export const experienceOptions = [
   "A little, but I want to deepen my knowledge",
 ];
 export const jobSupportOptions = ["Yes, definitely", "Not at the moment"];
+export const nlsCourses = [
+  "Cybersecurity",
+  "Web Development",
+  "AI in Legal Practice",
+];
+export const NLS_CAMPUS = "Port Harcourt Campus";
+export const NLS_COURSE_PRICE = 50000;
+
 export const nigerianStates = [
   "Abia",
   "Adamawa",

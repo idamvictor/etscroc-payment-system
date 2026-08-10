@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { ClipboardList, ExternalLink } from "lucide-react";
 import { supabaseAdmin } from "@/lib/supabase/admin";
+import { formatNlsRegistrationId } from "@/lib/nls-registration-id";
 import LogoutButton from "./LogoutButton";
 import StatusActions from "./StatusActions";
 import { Badge } from "@/components/ui/badge";
@@ -32,7 +33,7 @@ export default async function AdminPage({
   const activeTab: StatusTab = isStatusTab(status) ? status : "all";
 
   const { data: registrations, error } = await supabaseAdmin
-    .from("registrations")
+    .from("nls_registrations")
     .select("*")
     .order("created_at", { ascending: false });
 
@@ -78,7 +79,7 @@ export default async function AdminPage({
             </span>
             <div>
               <h1 className="text-2xl font-bold text-foreground">
-                Registrations
+                NLS × ETSCROC Registrations
               </h1>
               <div className="flex items-center gap-2 mt-1.5">
                 <Badge variant="outline">{counts.all} total</Badge>
@@ -118,24 +119,16 @@ export default async function AdminPage({
           <Table>
             <TableHeader>
               <TableRow className="sticky top-0 z-10 divide-x divide-border bg-card">
+                <TableHead>Registration ID</TableHead>
                 <TableHead>Submitted</TableHead>
-                <TableHead>First Name</TableHead>
-                <TableHead>Last Name</TableHead>
+                <TableHead>Full Name</TableHead>
+                <TableHead>WhatsApp</TableHead>
                 <TableHead>Email</TableHead>
-                <TableHead>Phone</TableHead>
-                <TableHead>Gender</TableHead>
-                <TableHead>Country</TableHead>
-                <TableHead>Country (Other)</TableHead>
-                <TableHead>State/City</TableHead>
-                <TableHead>Employment Status</TableHead>
-                <TableHead>Employment (Other)</TableHead>
-                <TableHead>Education Level</TableHead>
-                <TableHead>Education (Other)</TableHead>
-                <TableHead>Course</TableHead>
-                <TableHead>Tech Experience</TableHead>
-                <TableHead>Job Support</TableHead>
-                <TableHead>Referral Code</TableHead>
-                <TableHead>Agreed to Terms</TableHead>
+                <TableHead>Matric Number</TableHead>
+                <TableHead>Campus</TableHead>
+                <TableHead>Courses</TableHead>
+                <TableHead>Total Amount Paid</TableHead>
+                <TableHead>Payment Reference</TableHead>
                 <TableHead>Receipt</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead>Actions</TableHead>
@@ -144,26 +137,22 @@ export default async function AdminPage({
             <TableBody>
               {rows.map((r) => (
                 <TableRow key={r.id} className="divide-x divide-border">
+                  <TableCell className="font-mono font-semibold text-brand-orange-dark">
+                    {formatNlsRegistrationId(r.registration_number)}
+                  </TableCell>
                   <TableCell className="text-muted-foreground">
                     {new Date(r.created_at).toLocaleString()}
                   </TableCell>
-                  <TableCell>{r.first_name}</TableCell>
-                  <TableCell>{r.last_name}</TableCell>
+                  <TableCell>{r.full_name}</TableCell>
+                  <TableCell>{r.whatsapp_phone}</TableCell>
                   <TableCell>{r.email}</TableCell>
-                  <TableCell>{r.phone}</TableCell>
-                  <TableCell>{r.gender}</TableCell>
-                  <TableCell>{r.country}</TableCell>
-                  <TableCell>{r.country_other || "—"}</TableCell>
-                  <TableCell>{r.state_city}</TableCell>
-                  <TableCell>{r.employment_status}</TableCell>
-                  <TableCell>{r.employment_status_other || "—"}</TableCell>
-                  <TableCell>{r.education_level}</TableCell>
-                  <TableCell>{r.education_level_other || "—"}</TableCell>
-                  <TableCell>{r.course}</TableCell>
-                  <TableCell>{r.tech_experience}</TableCell>
-                  <TableCell>{r.job_support}</TableCell>
-                  <TableCell>{r.referral_code || "—"}</TableCell>
-                  <TableCell>{r.agree_terms ? "Yes" : "No"}</TableCell>
+                  <TableCell>{r.matric_number}</TableCell>
+                  <TableCell>{r.campus}</TableCell>
+                  <TableCell>{r.courses.join(", ")}</TableCell>
+                  <TableCell>
+                    ₦{r.total_amount_paid.toLocaleString()}
+                  </TableCell>
+                  <TableCell>{r.payment_reference}</TableCell>
                   <TableCell>
                     {r.receiptUrl ? (
                       <a
@@ -184,7 +173,7 @@ export default async function AdminPage({
               ))}
               {rows.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={21} className="py-16 text-center">
+                  <TableCell colSpan={13} className="py-16 text-center">
                     <div className="flex flex-col items-center gap-2">
                       <ClipboardList className="h-8 w-8 text-muted-foreground/40" />
                       <p className="text-sm font-medium text-foreground">
